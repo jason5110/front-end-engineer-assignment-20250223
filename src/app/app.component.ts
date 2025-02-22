@@ -1,3 +1,4 @@
+import {  debounceTime, distinctUntilChanged, filter, Observable, switchMap } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, inject } from '@angular/core';
@@ -8,8 +9,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatListModule } from '@angular/material/list';
 import { MatPaginatorModule } from '@angular/material/paginator';
-import { BehaviorSubject, map, Observable } from 'rxjs';
-import { CurrentSearch } from './services/search.service';
+
+import { CurrentSearch, SearchService } from './services/search.service';
+import { SearchConfigService } from './services/search-config.service';
 
 interface SearchResult {
   num_found: number;
@@ -35,42 +37,19 @@ interface SearchResult {
     MatPaginatorModule,
   ],
   // BONUS: Use DI to update the config of SearchService to update page size
+  providers: [SearchService, {
+    provide: SearchConfigService, useValue: { defaultPageSize: 20 }
+  }],
 })
 export class AppComponent {
   private $http = inject(HttpClient);
+  $search = inject(SearchService)
 
-  // TODO: Create a SearchService and use DI to inject it
-  // Check app/services/search.service.ts for the implementation
-  $search = {
-    searchText: 'lord of the rings',
-    pageSize: 10,
-    page: 1,
-    currentSearch$: new BehaviorSubject<CurrentSearch>({
-      searchText: '',
-      pageSize: 10,
-      page: 1,
-    }),
-    submit: () => {},
-  };
-
-  // TODO: Implement this observable to call the searchBooks() function
-  // Hint: Use RxJS operators to solve these issues
   searchResults$ = this.$search.currentSearch$.pipe(
-    map(() => ({
-      num_found: 2,
-      docs: [
-        {
-          title: 'The Lord of the Rings',
-          author_name: ['J.R.R. Tolkien'],
-          cover_edition_key: 'OL27702422M',
-        },
-        {
-          title: 'The Hobbit',
-          author_name: ['J.R.R. Tolkien'],
-          cover_edition_key: 'OL27702423M',
-        },
-      ],
-    }))
+    distinctUntilChanged(),
+    debounceTime(800),
+    filter((data) => !!data),
+    switchMap(data => this.searchBooks(data))
   );
 
   onSearchInputChange(event: Event) {
@@ -79,7 +58,6 @@ export class AppComponent {
 
   searchBooks(currentSearch: CurrentSearch): Observable<SearchResult> {
     const { searchText, pageSize, page } = currentSearch;
-
     const searchQuery = searchText.split(' ').join('+').toLowerCase();
 
     return this.$http.get<SearchResult>(

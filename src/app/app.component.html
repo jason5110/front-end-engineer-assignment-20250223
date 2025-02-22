@@ -34,7 +34,7 @@
     [length]="(searchResults$ | async)?.num_found ?? 0"
     [pageIndex]="$search.page - 1"
     [pageSize]="$search.pageSize"
-    (page)="$search.page = $event.pageIndex + 1"
+    (page)="$search.changePage($event.pageIndex + 1)"
     aria-label="Select page"
   />
   }
