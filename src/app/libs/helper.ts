@@ -8,3 +8,5 @@ export const getQueryParam = (url: string, key:string) => {
   else
     return results[1];
 }
+
+export const forceBiggerThenOneNumber = (value: number, defaultNum: number = 1) => (isNaN(value) || value < 1) ? defaultNum : value;

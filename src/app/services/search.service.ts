@@ -2,7 +2,7 @@ import { BehaviorSubject } from 'rxjs';
 import { inject, Injectable } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 
-import { getQueryParam } from '../libs/helper';
+import { forceBiggerThenOneNumber, getQueryParam } from '../libs/helper';
 import { SearchConfigService } from './search-config.service';
 
 // interface SearchConfig {
@@ -50,11 +50,14 @@ export class SearchService implements ISearchService {
 
         if (searchText) {
           const page = getQueryParam(event.url, 'page');
+          const limit = getQueryParam(event.url, 'limit');
 
           const intPage = parseInt(page)
+          const intLimit = parseInt(limit)
 
           this.searchText = searchText;
-          this.page = (isNaN(intPage) || intPage < 1) ? 1 : intPage;
+          this.page = forceBiggerThenOneNumber(intPage)
+          this.pageSize = forceBiggerThenOneNumber(intLimit, this.pageSize)
 
           this.currentSearch$.next({
             searchText: this.searchText,
